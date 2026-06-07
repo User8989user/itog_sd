@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: storing-service
+          uri: ${STORING_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/works/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: storingCB
+                fallbackUri: forward:/fallback/storing
+        - id: analysis-service
+          uri: ${ANALYSIS_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/reports/**,/api/wordcloud/**
+      circuitbreaker:
+        config:
+          enabled: true
+  main:
+    web-application-type: reactive
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG

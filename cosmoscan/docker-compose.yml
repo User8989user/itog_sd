@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  postgres-storing:
+    image: postgres:15
+    container_name: postgres-storing
+    environment:
+      POSTGRES_DB: storingdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_storing_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d storingdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres-analysis:
+    image: postgres:15
+    container_name: postgres-analysis
+    environment:
+      POSTGRES_DB: analysisdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_analysis_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d analysisdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  storing-service:
+    build: ./storing-service
+    container_name: storing-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres-storing:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-storing:5432/storingdb
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: pass
+      FILE_UPLOAD_DIR: /app/uploads
+      ANALYSIS_SERVICE_URL: http://analysis-service:8082
+    volumes:
+      - file-storage:/app/uploads
+
+  analysis-service:
+    build: ./analysis-service
+    container_name: analysis-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres-analysis:
+        condition: service_healthy
+      storing-service:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-analysis:5432/analysisdb
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: pass
+      STORING_SERVICE_URL: http://storing-service:8081
+
+  gateway:
+    build: ./gateway
+    container_name: gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - storing-service
+      - analysis-service
+    environment:
+      STORING_SERVICE_URL: http://storing-service:8081
+      ANALYSIS_SERVICE_URL: http://analysis-service:8082
+
+volumes:
+  postgres_storing_data:
+  postgres_analysis_data:
+  file-storage:

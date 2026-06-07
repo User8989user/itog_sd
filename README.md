@@ -16,13 +16,13 @@
    ```bash
    git clone https://github.com/your-username/cosmoscan.git
    cd cosmoscan
-```
+   ```
 
 2. Собрать и запустить все сервисы:
 
-```bash
-docker-compose up --build
-```
+   ```bash
+   docker-compose up --build
+   ```
 
 3. После запуска API доступно по адресу http://localhost:8080
 

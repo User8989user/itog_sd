@@ -21,7 +21,8 @@
 2. Собрать и запустить все сервисы:
 
 ```bash
-docker-compose up --build ```
+docker-compose up --build
+```
 
 3. После запуска API доступно по адресу http://localhost:8080
 
@@ -58,7 +59,8 @@ Circuit breaker в Gateway для защиты от повторных вызо�
 
 ```bash
 cd storing-service && mvn test
-cd ../analysis-service && mvn test ```
+cd ../analysis-service && mvn test
+```
 
 ## Скринкаст
 Нету пока
